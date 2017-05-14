@@ -5,6 +5,9 @@
 # Home page
 GET     /                           controllers.Application.index
 
+# Hotel API
+GET     /hotel/:cityId              controllers.HotelController.findByCityId(cityId: String)
+
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.at(path="/public", file)
 
