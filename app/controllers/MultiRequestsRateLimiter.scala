@@ -3,7 +3,10 @@ package controllers
 import scala.collection.mutable
 
 /**
- * This rate limiter controls n requests in 10 seconds
+ * This rate limiter controls n requests in 10 seconds.
+ *
+ * Configured apiKey can have its own rate limit.
+ * non-configurede apiKey will share the same rate limit controlled by the global apiKey
  *
  * @author roger1224@gmail.com
  *
@@ -21,12 +24,12 @@ class MultiRequestsRateLimiter() {
   /**
    * Default rate limit period: requests per 10 seconds
    */
-  val RateLimitPeriodInMS: Int = 10 * 1000
+  var _rateLimitPeriodInMS: Int = 10 * 1000
 
   /**
    * Default suspended time in seconds
    */
-  val SuspendedTimeInMS: Int = 5 * 60 * 1000
+  var _suspendedTimeInMS: Int = 5 * 60 * 1000
 
   /**
    * Default requests per period of time
@@ -54,10 +57,17 @@ class MultiRequestsRateLimiter() {
     new mutable.HashMap[String, mutable.PriorityQueue[Long]]()
 
 
-  def defaultRequestsPerPeriodTime_=(value: Int) = {
+  def setDefaultRequestsPerPeriodTime(value: Int) = {
     _defaultRequestsPerPeriodTime = value
   }
 
+  def setSuspendedTimeInSec(value: Int) = {
+    _suspendedTimeInMS = value * 1000
+  }
+
+  def setRateLimitPeriodInSec(value: Int) = {
+    _rateLimitPeriodInMS = value * 1000
+  }
 
   def addRateLimitSetting(apiKey: String, requestsAllowedInPeriod: Int) = {
     rateLimitSettings.put(apiKey, requestsAllowedInPeriod)
@@ -88,19 +98,19 @@ class MultiRequestsRateLimiter() {
 
     val callRecords: mutable.PriorityQueue[Long] = rateLimitCalls.getOrElseUpdate(apiKey, new mutable.PriorityQueue[Long]())
 
-    if (callRecords.isEmpty || callRecords.last < (now - RateLimitPeriodInMS)) {
+    if (callRecords.isEmpty || callRecords.last < (now - _rateLimitPeriodInMS)) {
       callRecords.clear
       callRecords.enqueue(now)
       printf("[%s] count=%s\n", apiKey, callRecords.length)
       return true
     }
 
-    while (!callRecords.isEmpty && callRecords.head < (now - RateLimitPeriodInMS)) {
+    while (!callRecords.isEmpty && callRecords.head < (now - _rateLimitPeriodInMS)) {
       callRecords.dequeue
     }
 
     if (callRecords.length >= requestsPerPeriodTime) {
-      nextAvailableTimes.put(apiKey, now + SuspendedTimeInMS)
+      nextAvailableTimes.put(apiKey, now + _suspendedTimeInMS)
       printf("[%s] suspended\n", apiKey)
       return false
     }

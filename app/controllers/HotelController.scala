@@ -4,6 +4,7 @@ import controllers.Application._
 import models.{Hotel, HotelDAO}
 import play.api.Play
 import play.api.libs.json.{Json, Writes}
+import play.api.mvc.{AnyContent, Action}
 
 
 /**
@@ -14,7 +15,7 @@ import play.api.libs.json.{Json, Writes}
  *         $$Change$$
  *         $$Author$$
  */
-object HotelController {
+class HotelController {
 
   val hotelDao: HotelDAO = new HotelDAO()
 
@@ -29,7 +30,7 @@ object HotelController {
     )
   }
 
-  private def loadFromFile = {
+  def loadFromFile = {
     val lines = scala.io.Source.fromFile(Play.current.getFile("conf/hoteldb.csv")).getLines
 
     for (line <- lines) {
@@ -55,4 +56,14 @@ object HotelController {
     Ok(Json.toJson(hotels))
   }
 
+}
+
+object HotelController extends HotelController {
+  /**
+   * Find hotels by cityId
+   * URI: hotel/[cityId]?sortBy=price&sortOrder=asc
+   *
+   * @param cityId
+   */
+  override def findByCityId(cityId: String): Action[AnyContent] = super.findByCityId(cityId)
 }
