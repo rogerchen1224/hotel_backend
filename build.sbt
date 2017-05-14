@@ -8,4 +8,8 @@ scalaVersion := "2.11.6"
 
 libraryDependencies ++= Seq( jdbc , anorm , cache , ws )
 
+libraryDependencies ++= Seq(
+  "org.scalatestplus.play" %% "scalatestplus-play" % "1.2.0" % "test"
+)
+
 unmanagedResourceDirectories in Test <+=  baseDirectory ( _ /"target/web/public/test" )  
